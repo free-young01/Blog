@@ -1,5 +1,9 @@
 package com.example.Blog.config; 
 
+import com.example.Blog.jwt.JwtAuthenticationFilter; 
+import com.example.Blog.jwt.JwtUtil;
+import com.example.Blog.user.UserRepository; 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -8,10 +12,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration // 이 파일은 스프링의 '설정' 파일
 @EnableWebSecurity // 스프링 시큐리티를 활성화
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtUtil jwtUtil;
+    private final UserRepository userRepository;
 
     // 1. 비밀번호 암호화 도구(PasswordEncoder)를 Bean으로 등록
     @Bean
@@ -40,6 +49,8 @@ public class SecurityConfig {
                 // 그 외(anyRequest)의 모든 요청은
                 .anyRequest().authenticated() // 인증(로그인)이 필요
         );
+
+        http.addFilterBefore(new JwtAuthenticationFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
 
         // [로그인/로그아웃 설정 비활성화]
         http.formLogin(form -> form.disable()); // 기본 로그인 폼 비활성화
